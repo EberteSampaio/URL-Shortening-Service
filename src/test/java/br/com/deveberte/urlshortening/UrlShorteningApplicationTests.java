@@ -1,4 +1,4 @@
-package br.com.deveberte.url_shortening;
+package br.com.deveberte.urlshortening;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
