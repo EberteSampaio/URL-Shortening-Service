@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface UrlRepository extends JpaRepository<Link, UUID> {
+public interface UrlRepository extends JpaRepository<Link, Long> {
 
     Optional<Link> findByUrl(String url);
     Optional<Link> findFirstByShortCode(String shortCode);
