@@ -36,7 +36,7 @@ public class UrlResource {
     }
 
     @PutMapping("{shortCode}")
-    public ResponseEntity<UrlResponse> update(@PathVariable String shortCode, @RequestBody UrlRequest request){
+    public ResponseEntity<UrlResponse> update(@PathVariable String shortCode, @RequestBody @Valid UrlRequest request){
         Link link = this.urlService.update(shortCode, request.link());
         return ResponseEntity.ok(UrlResponse.of(link));
     }
