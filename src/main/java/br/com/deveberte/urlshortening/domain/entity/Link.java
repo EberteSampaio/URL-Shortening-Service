@@ -1,6 +1,9 @@
 package br.com.deveberte.urlshortening.domain.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -13,17 +16,17 @@ public class Link {
     private String url;
     @Column(unique = true)
     private String shortCode;
+    @CreationTimestamp(source = SourceType.DB)
     private LocalDateTime createdAt;
+    @UpdateTimestamp(source = SourceType.DB)
     private LocalDateTime updatedAt;
     public Link(){}
-    public Link(String url, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Link(String url) {
         this.url = url;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public static Link create(String url){
-        return new Link(url, LocalDateTime.now(), LocalDateTime.now());
+        return new Link(url);
     }
 
     public Long getId() {
