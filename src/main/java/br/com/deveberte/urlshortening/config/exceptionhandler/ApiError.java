@@ -22,4 +22,28 @@ public class ApiError{
         this.path = path;
         this.fields = fields;
     }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public List<FieldWithError> getFields() {
+        return fields;
+    }
 }
