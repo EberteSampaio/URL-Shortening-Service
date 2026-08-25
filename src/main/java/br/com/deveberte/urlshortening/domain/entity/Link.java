@@ -17,6 +17,7 @@ public class Link implements Serializable {
     private String url;
     @Column(unique = true)
     private String shortCode;
+    private Long accessCount = 0L;
     @CreationTimestamp(source = SourceType.DB)
     private LocalDateTime createdAt;
     @UpdateTimestamp(source = SourceType.DB)
@@ -68,6 +69,14 @@ public class Link implements Serializable {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getAccessCount() {
+        return accessCount;
+    }
+
+    public void setAccessCount(Long accessCount) {
+        this.accessCount = accessCount;
     }
 }
 

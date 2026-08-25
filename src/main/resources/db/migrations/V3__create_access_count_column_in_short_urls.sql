@@ -1,0 +1,2 @@
+ALTER TABLE short_urls
+ADD COLUMN access_count BIGINT NOT NULL DEFAULT 0;

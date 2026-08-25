@@ -1,5 +1,6 @@
 package br.com.deveberte.urlshortening.api.resource;
 
+import br.com.deveberte.urlshortening.api.dto.UrlStatisticResponse;
 import br.com.deveberte.urlshortening.config.exceptionhandler.ApiError;
 import br.com.deveberte.urlshortening.domain.entity.Link;
 import br.com.deveberte.urlshortening.api.dto.UrlRequest;
@@ -62,6 +63,7 @@ public class UrlResource {
     @GetMapping("/{shortCode}")
     public ResponseEntity<UrlResponse> get(@PathVariable @Parameter(description = "Short code from URL") String shortCode){
         Link link = this.urlService.getLinkByShortCode(shortCode);
+        this.urlService.registerAccess(shortCode);
         return ResponseEntity.ok(UrlResponse.of(link));
     }
 
@@ -97,5 +99,21 @@ public class UrlResource {
     public ResponseEntity<Void> delete(@PathVariable @Parameter(description = "Short code from URL") String shortCode){
         this.urlService.delete(shortCode);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Get statistics from URL by short code")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Statistics was founded",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = UrlStatisticResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "URL not found",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))}
+            ),
+    })
+    @GetMapping("/{shortCode}/stats")
+    public ResponseEntity<UrlStatisticResponse> getStats(@PathVariable String shortCode){
+        return ResponseEntity.ok(UrlStatisticResponse.of(this.urlService.getStats(shortCode)));
     }
 }

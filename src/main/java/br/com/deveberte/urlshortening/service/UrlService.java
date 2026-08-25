@@ -59,6 +59,15 @@ public class UrlService
         this.urlRepository.delete(link);
     }
 
+    @Transactional
+    public void registerAccess(String shortCode){
+        this.urlRepository.incrementAccesCount(shortCode);
+    }
+
+    @Transactional(readOnly = true)
+    public Link getStats(String shortCode){
+        return getLink(shortCode);
+    }
     private Link getLink(String shortCode) {
         return this.urlRepository.findFirstByShortCode(shortCode).orElseThrow(() -> new UrlNotFoundException("URL não encontrada"));
     }
