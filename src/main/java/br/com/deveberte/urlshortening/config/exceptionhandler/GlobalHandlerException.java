@@ -3,78 +3,114 @@ package br.com.deveberte.urlshortening.config.exceptionhandler;
 import br.com.deveberte.urlshortening.exception.DomainException;
 import br.com.deveberte.urlshortening.exception.UrlNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @RestControllerAdvice
-public class GlobalHandlerException {
+public class GlobalHandlerException extends ResponseEntityExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalHandlerException.class);
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiError> handleDomainException(DomainException ex, HttpServletRequest request){
-        var badRequestStatus = HttpStatus.BAD_REQUEST;
-        var error = new ApiError(
-                badRequestStatus.value(),
-                "Dados inválidos",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        log.warn("Regra de negócio violada em {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 
-        return ResponseEntity.status(badRequestStatus).body(error);
+        return this.build(HttpStatus.BAD_REQUEST, "Dados inválidos", ex.getMessage(), request.getRequestURI(), null);
     }
+
     @ExceptionHandler(UrlNotFoundException.class)
     public ResponseEntity<ApiError> handleUrlNotFound(UrlNotFoundException ex, HttpServletRequest request){
-        var notFoundStatus = HttpStatus.NOT_FOUND;
-        var error = new ApiError(
-                notFoundStatus.value(),
-                "Recurso não encontrado",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        log.warn("Recurso não encontrado em {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 
-        return ResponseEntity.status(notFoundStatus).body(error);
+        return this.build(HttpStatus.NOT_FOUND, "Recurso não encontrado", ex.getMessage(), request.getRequestURI(), null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedExceptions(Exception ex, HttpServletRequest request){
+        String errorId = UUID.randomUUID().toString();
 
-        HttpStatus internalServerError = HttpStatus.INTERNAL_SERVER_ERROR;
-        var error = new ApiError(
-                internalServerError.value(),
-                "Erro interno no servidor",
-                "Ocorreu um erro inesperado. Tente novamente mais tarde.",
-                request.getRequestURI(),
-                null
-        );
+        log.error("errorId={} falha inesperada em {} {}", errorId, request.getMethod(), request.getRequestURI(), ex);
 
-        return ResponseEntity.status(internalServerError).body(error);
+        return this.build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno do servidor",
+                "Ocorreu um erro inesperado. Informe o código " + errorId + " ao suporte.",
+                request.getRequestURI(), null);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request){
-        List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
-
-        List<FieldWithError> campos = fieldErrors.stream()
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request){
+        List<FieldWithError> campos = ex.getBindingResult().getFieldErrors().stream()
                 .map(erro -> new FieldWithError(erro.getField(), erro.getDefaultMessage()))
-                .collect(Collectors.toList());
+                .toList();
 
-        HttpStatus badRequest = HttpStatus.BAD_REQUEST;
-        var erro = new ApiError(
-                badRequest.value(),
-                "Erro de Validação",
+        ApiError body = new ApiError(status.value(), "Erro de validação",
                 "Um ou mais campos estão inválidos. Faça o preenchimento correto e tente novamente.",
-                request.getRequestURI(),
-                campos
-        );
+                this.path(request), campos);
 
-        return ResponseEntity.status(badRequest).body(erro);
+        return this.handleExceptionInternal(ex, body, headers, status, request);
+    }
+    
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(Exception ex,
+                                                             Object body,
+                                                             HttpHeaders headers,
+                                                             HttpStatusCode status,
+                                                             WebRequest request){
+        String path = this.path(request);
+
+        if (body == null || body instanceof ProblemDetail) {
+            body = new ApiError(status.value(), this.reasonPhrase(status), this.detail(ex, body), path, null);
+        }
+
+        if (status.is5xxServerError()) {
+            log.error("Falha ao processar requisição ({}) em {}", status.value(), path, ex);
+        } else {
+            log.warn("Requisição rejeitada ({}) em {}: {}", status.value(), path, ex.getMessage());
+        }
+
+        return super.handleExceptionInternal(ex, body, headers, status, request);
+    }
+
+    private String detail(Exception ex, Object body){
+        if (body instanceof ProblemDetail problemDetail && problemDetail.getDetail() != null) {
+            return problemDetail.getDetail();
+        }
+
+        if (ex instanceof ErrorResponse errorResponse && errorResponse.getBody().getDetail() != null) {
+            return errorResponse.getBody().getDetail();
+        }
+
+        return "Não foi possível processar a requisição.";
+    }
+
+    private String reasonPhrase(HttpStatusCode status){
+        return status instanceof HttpStatus httpStatus ? httpStatus.getReasonPhrase() : "Erro";
+    }
+
+    private String path(WebRequest request){
+        return request instanceof ServletWebRequest servletWebRequest
+                ? servletWebRequest.getRequest().getRequestURI()
+                : request.getDescription(false);
+    }
+
+    private ResponseEntity<ApiError> build(HttpStatus status, String error, String message, String path, List<FieldWithError> fields){
+        return ResponseEntity.status(status).body(new ApiError(status.value(), error, message, path, fields));
     }
 }
