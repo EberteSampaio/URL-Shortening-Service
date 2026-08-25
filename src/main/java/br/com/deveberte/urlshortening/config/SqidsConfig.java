@@ -8,11 +8,9 @@ import org.sqids.Sqids;
 @Configuration
 @EnableConfigurationProperties(SqidsRecord.class)
 public class SqidsConfig {
-    private static int MIN_LENGHT;
-    private static  String ALPHABET;
 
     @Bean
-    public Sqids sqids(){
-        return Sqids.builder().minLength(MIN_LENGHT).alphabet(ALPHABET).build();
+    public Sqids sqids(SqidsRecord properties){
+        return Sqids.builder().minLength(properties.minLength()).alphabet(properties.alphabet()).build();
     }
 }
