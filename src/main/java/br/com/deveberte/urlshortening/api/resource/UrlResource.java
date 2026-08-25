@@ -35,13 +35,13 @@ public class UrlResource {
         return ResponseEntity.ok(UrlResponse.of(link));
     }
 
-    @PutMapping("{shortCode}")
+    @PutMapping("/{shortCode}")
     public ResponseEntity<UrlResponse> update(@PathVariable String shortCode, @RequestBody @Valid UrlRequest request){
         Link link = this.urlService.update(shortCode, request.link());
         return ResponseEntity.ok(UrlResponse.of(link));
     }
 
-    @DeleteMapping("{shortCode}")
+    @DeleteMapping("/{shortCode}")
     public ResponseEntity<Void> delete(@PathVariable String shortCode){
         this.urlService.delete(shortCode);
         return ResponseEntity.noContent().build();
