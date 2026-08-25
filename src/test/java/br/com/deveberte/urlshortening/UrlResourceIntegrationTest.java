@@ -78,7 +78,7 @@ public class UrlResourceIntegrationTest {
 
         String requestJson = """
                 {
-                    "url":"https://www.example.com"
+                    "link":"https://www.newexample.com"
                 }
                 """;
 
