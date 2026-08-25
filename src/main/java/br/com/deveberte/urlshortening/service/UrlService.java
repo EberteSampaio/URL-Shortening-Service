@@ -3,6 +3,8 @@ package br.com.deveberte.urlshortening.service;
 import br.com.deveberte.urlshortening.exception.UrlNotFoundException;
 import br.com.deveberte.urlshortening.repository.UrlRepository;
 import br.com.deveberte.urlshortening.domain.entity.Link;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.sqids.Sqids;
@@ -36,11 +38,13 @@ public class UrlService
         return link;
     }
     @Transactional(readOnly = true)
+    @Cacheable(value = "urls", key = "#shortCode")
     public Link getLinkByShortCode(String shortCode) {
         return getLink(shortCode);
     }
 
     @Transactional
+    @CacheEvict(value = "urls", key = "#shortCode")
     public Link update(String shortCode, String newUrl) {
         Link link = getLink(shortCode);
 
@@ -49,6 +53,7 @@ public class UrlService
         return this.urlRepository.save(link);
     }
     @Transactional
+    @CacheEvict(value = "urls", key = "#shortCode")
     public void delete(String shortCode){
         Link link = getLink(shortCode);
         this.urlRepository.delete(link);
