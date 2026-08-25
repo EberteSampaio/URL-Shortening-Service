@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
@@ -27,6 +28,7 @@ public class GlobalHandlerException extends ResponseEntityExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalHandlerException.class);
 
     @ExceptionHandler(DomainException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiError> handleDomainException(DomainException ex, HttpServletRequest request){
         log.warn("Regra de negócio violada em {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 
@@ -34,6 +36,7 @@ public class GlobalHandlerException extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(UrlNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ApiError> handleUrlNotFound(UrlNotFoundException ex, HttpServletRequest request){
         log.warn("Recurso não encontrado em {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 
@@ -41,6 +44,7 @@ public class GlobalHandlerException extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiError> handleUnexpectedExceptions(Exception ex, HttpServletRequest request){
         String errorId = UUID.randomUUID().toString();
 
