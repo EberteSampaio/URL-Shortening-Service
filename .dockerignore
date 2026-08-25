@@ -1,0 +1,9 @@
+target/
+build/
+.git/
+.gitignore
+.idea/
+*.iml
+.env
+Dockerfile
+README.md
