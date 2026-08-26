@@ -543,3 +543,5 @@ src/main/resources/
 ## License
 
 A study project, with no license defined at the moment.
+
+Inspiration: https://roadmap.sh/projects/url-shortening-service
