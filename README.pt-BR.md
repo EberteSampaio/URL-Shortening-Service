@@ -538,3 +538,5 @@ src/main/resources/
 ## Licença
 
 Projeto de estudo, sem licença definida no momento.
+
+Inspiração: https://roadmap.sh/projects/url-shortening-service
